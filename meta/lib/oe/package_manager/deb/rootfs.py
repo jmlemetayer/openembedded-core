@@ -188,6 +188,8 @@ class PkgRootfs(DpkgOpkgRootfs):
 
         execute_pre_post_process(self.d, deb_post_process_cmds)
 
+        self.pm.update_conffiles_md5sum()
+
         if self.progress_reporter:
             self.progress_reporter.next_stage()
 

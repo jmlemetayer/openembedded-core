@@ -8,6 +8,7 @@ import re
 import subprocess
 from oe.package_manager import *
 from oe.package_manager.common_deb_ipk import OpkgDpkgPM
+from pathlib import Path
 
 class DpkgIndexer(Indexer):
     def _create_configs(self):
@@ -165,6 +166,37 @@ class DpkgPM(OpkgDpkgPM):
                     tmp_sf.write(status)
 
         bb.utils.rename(status_file + ".tmp", status_file)
+
+    def update_conffiles_md5sum(self):
+        """
+        This function updates the md5sum of all "conffiles" in the
+        /var/lib/dpkg/status file. Ensuring that no "newconffile" values are left.
+        """
+        dpkg_dir = Path(self.target_rootfs) / "var/lib/dpkg"
+
+        # Get all "conffiles" md5sums
+        md5sums = {}
+        for conffiles_file in dpkg_dir.glob("info/*.conffiles"):
+            with open(conffiles_file) as file:
+                conffiles = [x.rstrip() for x in file.readlines()]
+            md5sums_file = conffiles_file.with_suffix(".md5sums")
+            if md5sums_file.exists():
+                with open(md5sums_file) as file:
+                    for line in file:
+                        md5sum, path = line.split()
+                        abspath = f"/{path}"
+                        if abspath in conffiles:
+                            md5sums[abspath] = md5sum
+
+        # Update the /var/lib/dpkg/status file
+        status_file = dpkg_dir / "status"
+        status_tmpfile = status_file.with_suffix(".tmp")
+        with open(status_file, "r") as status, open(status_tmpfile, "w") as status_tmp:
+            data = status.read()
+            for path, md5sum in md5sums.items():
+                data = data.replace(f"{path} newconffile", f"{path} {md5sum}", 1)
+            status_tmp.write(data)
+        status_tmpfile.replace(status_file)
 
     def run_pre_post_installs(self, package_name=None):
         """
