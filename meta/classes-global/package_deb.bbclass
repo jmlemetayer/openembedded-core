@@ -17,7 +17,10 @@ PKGWRITEDIRDEB = "${WORKDIR}/deploy-debs"
 
 APTCONF_TARGET = "${WORKDIR}"
 
-APT_ARGS = "${@['', '--no-install-recommends'][d.getVar("NO_RECOMMENDATIONS") == "1"]}"
+APT_ARGS = " \
+    ${@['', '--no-install-recommends'][d.getVar("NO_RECOMMENDATIONS") == "1"]} \
+    ${@['', '--mark-auto'][d.getVar("PACKAGES_MARKED_AS_AUTO") == "1"]} \
+"
 
 def debian_arch_map(arch, tune):
     tune_features = tune.split()
