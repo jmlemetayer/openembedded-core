@@ -443,6 +443,18 @@ class DpkgPM(OpkgDpkgPM):
     def remove_packaging_data(self):
         bb.utils.remove(self.target_rootfs + self.d.getVar('opkglibdir'), True)
         bb.utils.remove(self.target_rootfs + "/var/lib/dpkg/", True)
+        bb.utils.remove(self.target_rootfs + "/var/lib/apt/", True)
+
+    def copy_package_states(self):
+        """
+        This function includes the /var/lib/apt/extended_states file
+        into target rootfs.
+        """
+        staging_dir = self.d.getVar("STAGING_DIR_NATIVE")
+        source_dir = f"{staging_dir}/var/lib/apt"
+        target_dir = f"{self.target_rootfs}/var/lib/apt"
+        bb.utils.mkdirhier(target_dir)
+        bb.utils.copyfile(f"{source_dir}/extended_states", f"{target_dir}/extended_states")
 
     def fix_broken_dependencies(self):
         os.environ['APT_CONFIG'] = self.apt_conf_file

@@ -190,6 +190,8 @@ class PkgRootfs(DpkgOpkgRootfs):
 
         self.pm.update_conffiles_md5sum()
 
+        self.pm.copy_package_states()
+
         if self.progress_reporter:
             self.progress_reporter.next_stage()
 
